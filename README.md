@@ -2,8 +2,8 @@
 
 > **Portefeuille efficient Shariah (EU + US) avec stack IA complète — 100% gratuit, lancable en 1 clic depuis Colab**
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/VOTRE_USERNAME/shariah-portfolio/blob/main/notebooks/shariah_portfolio.ipynb)
-[![Daily Update](https://github.com/VOTRE_USERNAME/shariah-portfolio/actions/workflows/update_data.yml/badge.svg)](https://github.com/VOTRE_USERNAME/shariah-portfolio/actions)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AzipSauhabah/shariah-portfolio/blob/main/notebooks/shariah_portfolio.ipynb)
+[![Daily Update](https://github.com/AzipSauhabah/shariah-portfolio/actions/workflows/update_data.yml/badge.svg)](https://github.com/AzipSauhabah/shariah-portfolio/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -116,7 +116,7 @@ git init
 git add .
 git commit -m "🕌 Initial commit — Shariah Portfolio IA"
 git branch -M main
-git remote add origin https://github.com/VOTRE_USERNAME/shariah-portfolio.git
+git remote add origin https://github.com/AzipSauhabah/shariah-portfolio.git
 git push -u origin main
 ```
 
@@ -160,7 +160,7 @@ updater.run_full_update(tickers)
 
 ```bash
 # Cloner
-git clone https://github.com/VOTRE_USERNAME/shariah-portfolio.git
+git clone https://github.com/AzipSauhabah/shariah-portfolio.git
 cd shariah-portfolio
 
 # Environnement virtuel
