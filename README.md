@@ -205,5 +205,3 @@ python src/live_data.py
 MIT — libre d'utilisation, modification et distribution.
 
 ---
-
-*Projet développé avec Claude (Anthropic) — Architecture quantamentale IA pour la finance islamique*
