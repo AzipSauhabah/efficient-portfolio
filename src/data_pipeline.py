@@ -238,6 +238,6 @@ if __name__ == "__main__":
     cfg = load_config()
     tickers = cfg["universe"]["eu_tickers"] + cfg["universe"]["us_tickers"]
     dp = DataPipeline(cfg)
-    data = dp.prepare(tickers, use_cache=True)
+    data = dp.prepare(tickers, use_cache=False)
     print(f"Prix : {data['prices'].shape}, Macro : {data['macro'].shape}")
     print(data["prices"].tail(3))
