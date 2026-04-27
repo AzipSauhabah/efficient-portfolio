@@ -1,0 +1,241 @@
+# ============================================================
+#  SHARIAH EFFICIENT PORTFOLIO — CONFIGURATION CENTRALE
+#  Modifiez ce fichier pour paramétrer tout le système
+# ============================================================
+
+shariah:
+  filter_mode: "intersection"       # "intersection" | "union" | "msci_only" | "djim_only"
+  msci_thresholds:
+    haram_revenue_pct: 0.05
+    debt_to_assets: 0.33
+    cash_interest_to_assets: 0.33
+  djim_thresholds:
+    haram_revenue_pct: 0.05
+    debt_to_market_cap: 0.33
+    cash_to_market_cap: 0.33
+  update_frequency: "annual"
+  purification_rate: 0.03
+  grace_period_days: 90
+
+universe:
+  regions: ["EU", "US"]
+  eu_tickers:
+    - "ASML.AS"
+    - "MC.PA"
+    - "AIR.PA"
+    - "SAP.DE"
+    - "NESN.SW"
+    - "NOVN.SW"
+    - "ROG.SW"
+    - "SIE.DE"
+    - "OR.PA"
+    - "DSY.PA"
+    - "CAP.PA"
+    - "PHIA.AS"
+    - "ADS.DE"
+    - "BMW.DE"
+    - "VOW3.DE"
+  us_tickers:
+    - "AAPL"
+    - "MSFT"
+    - "GOOGL"
+    - "AMZN"
+    - "NVDA"
+    - "JNJ"
+    - "PG"
+    - "KO"
+    - "PEP"
+    - "MCD"
+    - "WMT"
+    - "HD"
+    - "ADBE"
+    - "QCOM"
+    - "TXN"
+    - "AMGN"
+    - "COST"
+    - "INTC"
+    - "CRM"
+    - "CSCO"
+
+data:
+  start_date: "2004-01-01"
+  end_date: "2024-12-31"
+  base_currency: "EUR"
+  fred_api_key: ""                  # Optionnel - gratuit sur fred.stlouisfed.org
+  use_cache: true
+  cache_path: "data/cache/"
+  macro_series:
+    vix: "VIXCLS"
+    us_yield_10y: "DGS10"
+    us_yield_2y: "DGS2"
+    us_m2: "M2SL"
+    eur_usd: "DEXUSEU"
+    oil_brent: "DCOILBRENTEU"
+
+portfolio:
+  initial_capital: 30000
+  min_position_size: 500
+  max_weight_per_stock: 0.10
+  max_weight_per_sector: 0.30
+  min_stocks: 15
+  max_stocks: 30
+  min_eu_weight: 0.30
+  min_us_weight: 0.20
+
+black_litterman:
+  tau: 0.05
+  risk_aversion: 3.0
+  prior_type: "shariah_index"
+  signals:
+    momentum: true
+    quality: true
+    macro: true
+    sentiment: true
+    crisis_regime: true
+  signal_weights:
+    momentum: 0.25
+    quality: 0.30
+    macro: 0.20
+    sentiment: 0.10
+    crisis_regime: 0.15
+  momentum_window_months: 12
+  momentum_skip_months: 1
+
+covariance:
+  method: "ensemble"                # "ledoit_wolf" | "dcc_garch" | "fama_french" | "ensemble"
+  ensemble_weights:
+    ledoit_wolf: 0.40
+    dcc_garch: 0.35
+    fama_french: 0.25
+  rolling_window_days: 756
+
+broker:
+  name: "fortuneo"
+  brokers:
+    fortuneo:
+      eu_fixed_fee: 2.0
+      us_fixed_fee: 50.0
+      us_pct_fee: 0.0
+      custody_annual_fee: 0.0
+      min_fee: 2.0
+    boursorama:
+      eu_fixed_fee: 1.99
+      us_fixed_fee: 0.0
+      us_pct_fee: 0.0099
+      us_min_fee: 7.99
+      custody_annual_fee: 0.0
+      min_fee: 1.99
+    ibkr:
+      eu_fixed_fee: 0.0
+      us_fixed_fee: 0.0
+      eu_pct_fee: 0.0005
+      us_pct_fee: 0.00005
+      us_min_fee: 1.0
+      custody_annual_fee: 0.0
+      min_fee: 1.0
+    swissquote:
+      eu_fixed_fee: 9.0
+      us_fixed_fee: 9.0
+      us_pct_fee: 0.0
+      custody_annual_fee: 100.0
+      min_fee: 9.0
+  slippage:
+    base_pct: 0.001
+    large_cap_pct: 0.0005
+    mid_cap_pct: 0.0015
+
+taxation:
+  country: "france"
+  flat_tax_pct: 0.30
+  us_dividend_withholding: 0.15
+  eu_dividend_withholding: 0.15
+  pru_method: "fifo"
+
+rebalancing:
+  strategy: "cost_aware"
+  min_drift_pct: 0.05
+  min_net_gain_eur: 50.0
+  max_frequency_days: 90
+  min_frequency_days: 365
+  batch_us_orders: true
+
+extreme_events:
+  method: "ensemble"
+  ensemble_weights:
+    copula: 0.35
+    monte_carlo: 0.35
+    historical_stress: 0.30
+  copula:
+    family: "clayton"
+    n_simulations: 10000
+  monte_carlo:
+    distribution: "student_t"
+    degrees_of_freedom: 5
+    n_simulations: 10000
+  stress_tests:
+    - name: "GFC_2008"
+      start: "2008-09-01"
+      end: "2009-03-31"
+    - name: "COVID_2020"
+      start: "2020-02-19"
+      end: "2020-03-23"
+    - name: "RATE_SHOCK_2022"
+      start: "2022-01-01"
+      end: "2022-12-31"
+    - name: "DOT_COM_2001"
+      start: "2000-03-01"
+      end: "2002-10-31"
+
+backtest:
+  method: "walk_forward"
+  train_window_years: 3
+  test_window_months: 12
+  benchmark_tickers:
+    - "^STOXX50E"
+    - "^GSPC"
+  metrics:
+    - "total_return"
+    - "annualized_return"
+    - "volatility"
+    - "sharpe_ratio"
+    - "sortino_ratio"
+    - "max_drawdown"
+    - "calmar_ratio"
+    - "var_95"
+    - "cvar_95"
+    - "net_return_after_costs"
+
+ai:
+  xgboost:
+    enabled: true
+    n_estimators: 300
+    max_depth: 4
+    learning_rate: 0.05
+    lookback_features_days: [21, 63, 126, 252]
+  hmm:
+    enabled: true
+    n_regimes: 3                    # bull / bear / crisis
+    covariance_type: "full"
+    n_iter: 100
+  lstm:
+    enabled: true
+    hidden_size: 64
+    num_layers: 2
+    dropout: 0.2
+    lookback_days: 60
+    epochs: 50
+    batch_size: 32
+  finbert:
+    enabled: true
+    model_name: "ProsusAI/finbert"  # HuggingFace, gratuit
+    news_lookback_days: 30
+    max_articles_per_ticker: 10
+  rl_agent:
+    enabled: true
+    algorithm: "PPO"                # Stable-Baselines3
+    total_timesteps: 100000
+    learning_rate: 0.0003
+    n_steps: 2048
+    batch_size: 64
+    gamma: 0.99
+    model_path: "data/cache/rl_agent.zip"

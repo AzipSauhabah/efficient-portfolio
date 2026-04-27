@@ -1,0 +1,2 @@
+# Ce fichier maintient le répertoire data/cache/ dans git
+# Les données parquet seront générées automatiquement au premier lancement

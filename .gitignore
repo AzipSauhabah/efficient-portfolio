@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data — garde les parquet en cache mais pas les fichiers trop lourds
+data/cache/*.pkl          # modèles ML (trop lourds pour git)
+data/cache/tb_logs/       # TensorBoard logs
+data/raw/
+
+# Sauf ces fichiers de cache légers (données pré-calculées pour Colab)
+!data/cache/.gitkeep
+!data/cache/universe_latest.parquet
+!data/cache/update_manifest.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (ne jamais commiter de clés API)
+.env
+*.env
+secrets.yaml
+api_keys.py
+
+# Outputs temporaires
+*.png
+*.jpg
+*.pdf
+output/
+
+# Logs
+*.log
+logs/

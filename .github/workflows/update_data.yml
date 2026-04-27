@@ -1,0 +1,153 @@
+name: 🔄 Daily Data Update
+
+on:
+  schedule:
+    - cron: '0 18 * * 1-5'   # Lun-Ven à 18h UTC (après clôture EU et US)
+  workflow_dispatch:           # Déclenchement manuel depuis GitHub UI
+    inputs:
+      force_update:
+        description: 'Forcer la mise à jour complète (shariah + modèles)'
+        required: false
+        default: 'false'
+      force_retrain:
+        description: 'Forcer le re-entraînement des modèles ML'
+        required: false
+        default: 'false'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install yfinance pandas numpy scipy pyyaml scikit-learn \
+                      requests pyarrow tqdm xgboost hmmlearn --quiet
+
+      - name: 📂 Restore data cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/
+          key: shariah-data-${{ runner.os }}-${{ hashFiles('config.yaml') }}
+          restore-keys: |
+            shariah-data-${{ runner.os }}-
+
+      - name: 🔄 Run data update
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          FORCE_UPDATE: ${{ github.event.inputs.force_update || 'false' }}
+        run: |
+          python -c "
+          import sys, os, yaml
+          sys.path.insert(0, 'src')
+          os.makedirs('data/cache', exist_ok=True)
+
+          with open('config.yaml') as f:
+              cfg = yaml.safe_load(f)
+
+          # Injecte la clé FRED si disponible
+          fred_key = os.environ.get('FRED_API_KEY', '')
+          if fred_key:
+              cfg['data']['fred_api_key'] = fred_key
+
+          from live_data import DataUpdater
+          tickers = cfg['universe']['eu_tickers'] + cfg['universe']['us_tickers']
+          force = os.environ.get('FORCE_UPDATE', 'false').lower() == 'true'
+
+          updater = DataUpdater(cfg)
+          report = updater.run_full_update(tickers, force=force)
+
+          import json
+          print('Report:')
+          print(json.dumps(report, indent=2, default=str))
+
+          # Écrit un résumé dans un fichier pour l'artefact
+          with open('data/cache/last_update_report.json', 'w') as f:
+              json.dump(report, f, indent=2, default=str)
+          "
+
+      - name: 💾 Commit updated cache
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/cache/*.parquet data/cache/*.json || true
+          git diff --staged --quiet || git commit -m "🔄 Auto-update données $(date +'%Y-%m-%d')"
+          git push || echo "Rien à pousser"
+
+      - name: 📊 Upload update report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: update-report-${{ github.run_number }}
+          path: data/cache/last_update_report.json
+          retention-days: 30
+
+  retrain-models:
+    runs-on: ubuntu-latest
+    needs: update-data
+    timeout-minutes: 60
+    if: github.event.inputs.force_retrain == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install ML deps
+        run: |
+          pip install yfinance pandas numpy scipy pyyaml scikit-learn \
+                      xgboost hmmlearn torch pyarrow tqdm --quiet
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/
+          key: shariah-data-${{ runner.os }}-${{ hashFiles('config.yaml') }}
+
+      - name: 🧠 Re-train ML models
+        run: |
+          python -c "
+          import sys, yaml
+          sys.path.insert(0, 'src')
+          with open('config.yaml') as f:
+              cfg = yaml.safe_load(f)
+          from data_pipeline import DataPipeline
+          from ml_engine import MLEngine
+          from live_data import DataUpdater
+
+          tickers = cfg['universe']['eu_tickers'] + cfg['universe']['us_tickers']
+          dp = DataPipeline(cfg)
+          data = dp.prepare(tickers, use_cache=True)
+          tickers_ok = [t for t in tickers if t in data['returns'].columns]
+
+          engine = MLEngine(cfg)
+          engine.fit(data['returns'], data['macro'], tickers_ok)
+          engine.save('data/cache/')
+
+          updater = DataUpdater(cfg)
+          updater.mark_retrained()
+          print('Re-entraînement terminé')
+          "
+
+      - name: Commit models
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/cache/*.pkl || true
+          git diff --staged --quiet || git commit -m "🧠 Retrain ML models $(date +'%Y-%m-%d')"
+          git push || echo "Rien à pousser"
